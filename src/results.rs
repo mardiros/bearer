@@ -1,7 +1,6 @@
 
 #[derive(Debug, Clone)]
 pub enum BearerError {
-    ExpiredToken,
     ValueError(String),
     OAuth2Error(String),
     RecvError(String),
