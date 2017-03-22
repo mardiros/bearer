@@ -7,6 +7,9 @@ keywords = ["OAuth2"]
 categories = ["authentication", "command-line-interface"]
 description = "command line utility to generate Authorization HTTP header"
 license = "BSD-3-Clause"
+documentation = "https://docs.rs/bearer"
+#homepage = "https://github.com/mardiros/bearer"
+repository = "https://github.com/mardiros/bearer"
 
 [dependencies]
 
