@@ -5,6 +5,8 @@ authors = ["Guillaume Gauvrit <guillaume@gauvr.it>"]
 readme = "README.md"
 keywords = ["OAuth2"]
 categories = ["authentication", "command-line-interface"]
+description = "command line utility to generate Authorization HTTP header"
+license = "BSD 3-Clause"
 
 [dependencies]
 
