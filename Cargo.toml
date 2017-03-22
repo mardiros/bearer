@@ -2,6 +2,9 @@
 name = "bearer"
 version = "0.1.0"
 authors = ["Guillaume Gauvrit <guillaume@gauvr.it>"]
+readme = "README.md"
+keywords = ["OAuth2"]
+categories = ["authentication", "command-line-interface"]
 
 [dependencies]
 
