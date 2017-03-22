@@ -1,3 +1,17 @@
+//! # Bearer
+//!
+//! bearer is a command line utilities to generate HTTP header
+//! Authorization for bearer tokens. See https://tools.ietf.org/html/rfc6750
+//!
+//! bearer comes with a `--register` that will ask you the OAuth 2.0
+//! client information to initialize the access and refresh tokens.
+//!
+//! Afterwhat it generate a header you can path to a curl request:
+//!
+//! ```
+//! curl -H "$(bearer client_name)" "http://<oauth2 api>" | jq
+//! ```
+//!
 
 #[macro_use]
 extern crate log;
