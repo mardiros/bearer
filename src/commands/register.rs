@@ -41,6 +41,7 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
     let token_url = read_stdin("Enter the OAuth2.0 Token Url: ")?;
     let client_id = read_stdin("Enter the Client Id: ")?;
     let secret = read_stdin("Enter the Client Secret: ")?;
+    let scope = read_stdin("Enter the scope (optional): ")?;
 
     let mut config = Config::new(config_dir,
                                  client_name,
@@ -48,7 +49,11 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
                                  authorize_url.as_str(),
                                  token_url.as_str(),
                                  client_id.as_str(),
-                                 secret.as_str())?;
+                                 secret.as_str(),
+                                 match scope.len() {
+                                    0 => None,
+                                    _ => Some(scope.as_str()),
+                                 })?;
 
     println!("");
     println!("Visit to finish the configuration: http://localhost:6750/callback");

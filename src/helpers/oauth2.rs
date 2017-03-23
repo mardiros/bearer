@@ -126,15 +126,26 @@ Method Not Allowed
     }
 
     fn handle_302(&mut self, stream: &mut TcpStream) {
+
+
+        let mut location = format!(
+            "{}?response_type=code&client_id={}&redirect_uri={}",
+            self.client.authorize_url,
+            url_encode(self.client.client_id),
+            url_encode(self.redirect_uri().as_ref()));
+
+        if let Some(scope) = self.client.scope {
+            location.push_str("&scope=");
+            location.push_str(scope);
+        }
+
+        debug!("Redirecting to {}", location);
+
         let resp = format!("HTTP/1.1 302 Moved Temporarily
 Connection: close
 Server: bearer-rs
-Location: {}?response_type=code&client_id={}&redirect_uri={}
-",
-                           self.client.authorize_url,
-                           url_encode(self.client.client_id),
-                           url_encode(self.redirect_uri().as_ref()));
-
+Location: {}
+", location);
         stream.write(resp.as_bytes()).unwrap();
     }
 

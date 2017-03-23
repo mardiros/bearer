@@ -25,6 +25,7 @@ struct Client {
     pub authorize_url: String,
     pub client_id: String,
     pub secret: String,
+    pub scope: Option<String>,
 }
 
 
@@ -34,6 +35,7 @@ pub struct ClientRef<'a> {
     pub authorize_url: &'a str,
     pub client_id: &'a str,
     pub secret: &'a str,
+    pub scope: Option<&'a str>,
 }
 
 
@@ -116,7 +118,8 @@ impl Config {
                authorize_url: &str,
                token_url: &str,
                client_id: &str,
-               secret: &str)
+               secret: &str,
+               scope: Option<&str>)
                -> BearerResult<Self> {
 
         let (path, exists) = build_path(config_dir, client_name)?;
@@ -132,6 +135,10 @@ impl Config {
                 token_url: token_url.to_string(),
                 client_id: client_id.to_string(),
                 secret: secret.to_string(),
+                scope: match scope {
+                    Some(scope) => Some(scope.to_string()),
+                    None => None,
+                }
             },
             tokens: None,
         };
@@ -184,6 +191,10 @@ impl Config {
             authorize_url: self.config.client.authorize_url.as_str(),
             client_id: self.config.client.client_id.as_str(),
             secret: self.config.client.secret.as_str(),
+            scope: match self.config.client.scope {
+                Some(ref scope) => Some(scope.as_str()),
+                None => None,
+            },
         }
     }
 
