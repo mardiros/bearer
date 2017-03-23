@@ -187,18 +187,6 @@ impl Config {
         }
     }
 
-    pub fn token_url(&self) -> &str {
-        self.config.client.token_url.as_str()
-    }
-
-    pub fn client_id(&self) -> &str {
-        self.config.client.client_id.as_str()
-    }
-
-    pub fn secret(&self) -> &str {
-        self.config.client.secret.as_str()
-    }
-
     pub fn set_tokens(&mut self, tokens: Tokens) {
         self.config.tokens = Some(tokens)
     }

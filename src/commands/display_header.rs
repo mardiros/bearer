@@ -17,10 +17,7 @@ pub fn display_header(config_dir: &str, client_name: &str) -> BearerResult<()> {
             debug!("Refreshing Token");
             match conf.refresh_token() {
                 Some(rtoken) => {
-                    let tokens = oauth2client::from_refresh_token(conf.token_url(),
-                                                                  conf.client_id(),
-                                                                  conf.secret(),
-                                                                  rtoken)?;
+                    let tokens = oauth2client::from_refresh_token(&conf.client(), rtoken)?;
                     Some(tokens)
                 }
                 None => {
