@@ -46,9 +46,14 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
                                  client_id.as_str(),
                                  secret.as_str())?;
 
+    println!("");
+    println!("Visit to finish the configuration: http://localhost:6750/callback");
+
     debug!("Start server to retrieve tokens");
     let tokens = oauth2::get_tokens(&config)?;
     debug!("Token retrieved: {:?}", tokens);
     config.set_tokens(tokens);
-    config.write()
+    config.write()?;
+    println!("Tokens retrieved succesfully");
+    Ok(())
 }
