@@ -15,12 +15,10 @@ pub struct JsonToken {
     pub refresh_token: Option<String>,
 }
 
-pub fn fetch_token(oauth2_server: &str, form: &mut &[u8]) -> BearerResult<Tokens> {
-
-    let token_url = format!("{}/token", oauth2_server);
+pub fn fetch_token(token_url: &str, form: &mut &[u8]) -> BearerResult<Tokens> {
 
     let mut curl = Easy::new();
-    curl.url(token_url.as_str()).unwrap();
+    curl.url(token_url).unwrap();
     curl.post(true).unwrap();
     curl.post_field_size(form.len() as u64).unwrap();
 
@@ -61,7 +59,7 @@ auth code, expected `2XX`, found `{}`: {}", code, data)));
 
 }
 
-pub fn from_authcode(oauth2_server: &str,
+pub fn from_authcode(token_url: &str,
                      oauth2_client_id: &str,
                      oauth2_secret: &str,
                      authcode: &str)
@@ -75,11 +73,11 @@ pub fn from_authcode(oauth2_server: &str,
         .finish();
 
     let mut form: &[u8] = form.as_bytes();
-    fetch_token(oauth2_server, &mut form)
+    fetch_token(token_url, &mut form)
 }
 
 
-pub fn from_refresh_token(oauth2_server: &str,
+pub fn from_refresh_token(token_url: &str,
                           oauth2_client_id: &str,
                           oauth2_secret: &str,
                           refresh_token: &str)
@@ -93,5 +91,5 @@ pub fn from_refresh_token(oauth2_server: &str,
         .finish();
 
     let mut form: &[u8] = form.as_bytes();
-    fetch_token(oauth2_server, &mut form)
+    fetch_token(token_url, &mut form)
 }

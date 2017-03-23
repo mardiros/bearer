@@ -13,10 +13,18 @@ use super::results::{BearerResult, BearerError};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct TomlConfig {
-    pub server_url: String,
+    pub client: Client,
+    pub tokens: Option<Tokens>,
+}
+
+
+#[derive(Debug, Serialize, Clone, Deserialize)]
+struct Client {
+    pub provider: String,
+    pub token_url: String,
+    pub authorize_url: String,
     pub client_id: String,
     pub secret: String,
-    pub tokens: Option<Tokens>,
 }
 
 
@@ -95,7 +103,9 @@ impl Config {
 
     pub fn new(config_dir: &str,
                client_name: &str,
-               server_url: &str,
+               provider: &str,
+               authorize_url: &str,
+               token_url: &str,
                client_id: &str,
                secret: &str)
                -> BearerResult<Self> {
@@ -107,9 +117,13 @@ impl Config {
         }
 
         let config = TomlConfig {
-            server_url: server_url.to_string(),
-            client_id: client_id.to_string(),
-            secret: secret.to_string(),
+            client: Client {
+                provider: provider.to_string(),
+                authorize_url: authorize_url.to_string(),
+                token_url: token_url.to_string(),
+                client_id: client_id.to_string(),
+                secret: secret.to_string(),
+            },
             tokens: None,
         };
 
@@ -154,16 +168,20 @@ impl Config {
         Ok(())
     }
 
-    pub fn server_url(&self) -> &str {
-        self.config.server_url.as_str()
+    pub fn authorize_url(&self) -> &str {
+        self.config.client.authorize_url.as_str()
+    }
+
+    pub fn token_url(&self) -> &str {
+        self.config.client.token_url.as_str()
     }
 
     pub fn client_id(&self) -> &str {
-        self.config.client_id.as_str()
+        self.config.client.client_id.as_str()
     }
 
     pub fn secret(&self) -> &str {
-        self.config.secret.as_str()
+        self.config.client.secret.as_str()
     }
 
     pub fn set_tokens(&mut self, tokens: Tokens) {

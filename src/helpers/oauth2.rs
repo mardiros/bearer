@@ -28,7 +28,8 @@ fn url_encode(to_decode: &str) -> String {
 
 struct Http {
     port: usize,
-    oauth2_server: String,
+    oauth2_authorize_url: String,
+    oauth2_token_url: String,
     oauth2_client_id: String,
     oauth2_secret: String,
     tokens: Option<BearerResult<Tokens>>,
@@ -38,7 +39,8 @@ impl Http {
     pub fn new(config: &Config) -> Self {
         Http {
             port: 6750,
-            oauth2_server: config.server_url().to_string(),
+            oauth2_authorize_url: config.authorize_url().to_string(),
+            oauth2_token_url: config.token_url().to_string(),
             oauth2_client_id: config.client_id().to_string(),
             oauth2_secret: config.secret().to_string(),
             tokens: None,
@@ -135,9 +137,9 @@ Method Not Allowed
         let resp = format!("HTTP/1.1 302 Moved Temporarily
 Connection: close
 Server: bearer-rs
-Location: {}/authorize?response_type=code&client_id={}&redirect_uri={}
+Location: {}?response_type=code&client_id={}&redirect_uri={}
 ",
-                           self.oauth2_server,
+                           self.oauth2_authorize_url.as_str(),
                            url_encode(self.oauth2_client_id.as_str()),
                            url_encode(self.redirect_uri().as_ref()));
 
@@ -157,7 +159,7 @@ Tokens received!
 ")
             .unwrap();
 
-        let tokens = oauth2client::from_authcode(self.oauth2_server.as_str(),
+        let tokens = oauth2client::from_authcode(self.oauth2_token_url.as_str(),
                                                  self.oauth2_client_id.as_str(),
                                                  self.oauth2_secret.as_str(),
                                                  code);

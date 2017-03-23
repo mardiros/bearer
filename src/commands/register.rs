@@ -36,13 +36,17 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
     println!("If the provider require a https url, please run an https reverse proxy before \
               continue.");
     println!("");
-    let server_url = read_stdin("Enter the OAuth2.0 Server Url: ")?;
+    let provider_name = read_stdin("Enter the OAuth2.0 Provider Name: ")?;
+    let authorize_url = read_stdin("Enter the OAuth2.0 Authorize Url: ")?;
+    let token_url = read_stdin("Enter the OAuth2.0 Token Url: ")?;
     let client_id = read_stdin("Enter the Client Id: ")?;
     let secret = read_stdin("Enter the Client Secret: ")?;
 
     let mut config = Config::new(config_dir,
                                  client_name,
-                                 server_url.as_str(),
+                                 provider_name.as_str(),
+                                 authorize_url.as_str(),
+                                 token_url.as_str(),
                                  client_id.as_str(),
                                  secret.as_str())?;
 
