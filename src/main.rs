@@ -42,7 +42,7 @@ fn main() {
     pretty_env_logger::init().unwrap();
     match commands::start() {
         Ok(()) => {
-            debug!("Command bearer ended successfully");
+            debug!("Command bearer ended succesfully");
         }
         Err(results::BearerError::ValueError(msg)) => {
             let _ = writeln!(&mut std::io::stderr(), "ERROR: {}", msg);
