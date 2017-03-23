@@ -28,6 +28,15 @@ struct Client {
 }
 
 
+pub struct ClientRef<'a> {
+    pub provider: &'a str,
+    pub token_url: &'a str,
+    pub authorize_url: &'a str,
+    pub client_id: &'a str,
+    pub secret: &'a str,
+}
+
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct Tokens {
     pub access_token: String,
@@ -168,8 +177,14 @@ impl Config {
         Ok(())
     }
 
-    pub fn authorize_url(&self) -> &str {
-        self.config.client.authorize_url.as_str()
+    pub fn client(&self) -> ClientRef {
+        ClientRef {
+            provider: self.config.client.provider.as_str(),
+            token_url: self.config.client.token_url.as_str(),
+            authorize_url: self.config.client.authorize_url.as_str(),
+            client_id: self.config.client.client_id.as_str(),
+            secret: self.config.client.secret.as_str(),
+        }
     }
 
     pub fn token_url(&self) -> &str {

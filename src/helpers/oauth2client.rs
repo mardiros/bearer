@@ -5,7 +5,7 @@ use curl::easy::Easy;
 use url::form_urlencoded::Serializer as URLSerializer;
 
 use super::super::results::{BearerResult, BearerError};
-use super::super::config::Tokens;
+use super::super::config::{Tokens, ClientRef};
 
 
 #[derive(Deserialize)]
@@ -59,21 +59,19 @@ auth code, expected `2XX`, found `{}`: {}", code, data)));
 
 }
 
-pub fn from_authcode(token_url: &str,
-                     oauth2_client_id: &str,
-                     oauth2_secret: &str,
+pub fn from_authcode(client: &ClientRef,
                      authcode: &str)
                      -> BearerResult<Tokens> {
 
     let form = URLSerializer::new(String::new())
-        .append_pair("client_id", oauth2_client_id)
-        .append_pair("client_secret", oauth2_secret)
+        .append_pair("client_id", client.client_id)
+        .append_pair("client_secret", client.secret)
         .append_pair("code", authcode)
         .append_pair("grant_type", "authorization_code")
         .finish();
 
     let mut form: &[u8] = form.as_bytes();
-    fetch_token(token_url, &mut form)
+    fetch_token(client.token_url, &mut form)
 }
 
 

@@ -1,12 +1,10 @@
 use std::time::Duration;
-use std::thread;
-use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
 use std::io::Write;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 
 
-use super::super::config::{Tokens, Config};
+use super::super::config::{Tokens, Config, ClientRef};
 use super::super::results::{BearerResult, BearerError};
 use super::oauth2client;
 
@@ -26,23 +24,17 @@ fn url_encode(to_decode: &str) -> String {
 }
 
 
-struct Http {
+struct Http<'a> {
     port: usize,
-    oauth2_authorize_url: String,
-    oauth2_token_url: String,
-    oauth2_client_id: String,
-    oauth2_secret: String,
+    client: ClientRef<'a>,
     tokens: Option<BearerResult<Tokens>>,
 }
 
-impl Http {
-    pub fn new(config: &Config) -> Self {
+impl<'a> Http<'a> {
+    pub fn new(config: &'a Config) -> Self {
         Http {
             port: 6750,
-            oauth2_authorize_url: config.authorize_url().to_string(),
-            oauth2_token_url: config.token_url().to_string(),
-            oauth2_client_id: config.client_id().to_string(),
-            oauth2_secret: config.secret().to_string(),
+            client: config.client(),
             tokens: None,
         }
     }
@@ -139,8 +131,8 @@ Connection: close
 Server: bearer-rs
 Location: {}?response_type=code&client_id={}&redirect_uri={}
 ",
-                           self.oauth2_authorize_url.as_str(),
-                           url_encode(self.oauth2_client_id.as_str()),
+                           self.client.authorize_url,
+                           url_encode(self.client.client_id),
                            url_encode(self.redirect_uri().as_ref()));
 
         stream.write(resp.as_bytes()).unwrap();
@@ -159,10 +151,7 @@ Tokens received!
 ")
             .unwrap();
 
-        let tokens = oauth2client::from_authcode(self.oauth2_token_url.as_str(),
-                                                 self.oauth2_client_id.as_str(),
-                                                 self.oauth2_secret.as_str(),
-                                                 code);
+        let tokens = oauth2client::from_authcode(&self.client, code);
         self.tokens = Some(tokens);
 
     }
@@ -196,22 +185,13 @@ Content-Length: {}
 }
 
 
-pub fn get_tokens(config: &Config) -> BearerResult<Tokens> {
+pub fn get_tokens<'a>(config: &'a Config) -> BearerResult<Tokens> {
 
-    let (tx, rx): (SyncSender<BearerResult<Tokens>>, Receiver<BearerResult<Tokens>>) =
-        sync_channel(1);
+    let mut server: Http<'a> = Http::new(config);
+    let token = server.fetch_tokens();
 
-    let mut server = Http::new(config);
-
-    let _ = thread::spawn(move || {
-        let token = server.fetch_tokens();
-        tx.send(token).ok().expect("Unable to send tokens");
-    });
-
-    debug!("Wait for tokens...");
-    let token = rx.recv();
     if let Err(err) = token {
         return Err(BearerError::RecvError(format!("cannot fetch tokens: {:?}", err)));
     }
-    token.unwrap()
+    Ok(token.unwrap())
 }
