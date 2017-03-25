@@ -59,12 +59,13 @@ auth code, expected `2XX`, found `{}`: {}", code, data)));
 
 }
 
-pub fn from_authcode(client: &ClientRef, authcode: &str) -> BearerResult<Tokens> {
+pub fn from_authcode(client: &ClientRef, authcode: &str, callback_uri: &str) -> BearerResult<Tokens> {
 
     let form = URLSerializer::new(String::new())
         .append_pair("client_id", client.client_id)
         .append_pair("client_secret", client.secret)
         .append_pair("code", authcode)
+        .append_pair("redirect_uri", callback_uri)
         .append_pair("grant_type", "authorization_code")
         .finish();
 

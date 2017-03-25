@@ -152,18 +152,29 @@ Location: {}
     fn handle_200_code(&mut self, stream: &mut TcpStream, code: &str) {
         debug!("OAuth2.0 Authorization Code received, fetching tokens");
 
-        stream.write(b"HTTP/1.1 200 OK
+        let tokens = oauth2client::from_authcode(&self.client, code, self.redirect_uri().as_str());
+        let content = match tokens {
+            Ok(res) => {
+                self.tokens = Some(Ok(res));
+                "Token received".to_string()
+            }
+            Err(err) => {
+                format!("Error while fetching token: {:?}", err)
+            }
+        };
+
+        let resp = format!("HTTP/1.1 200 Ok
 Connection: close
 Server: bearer-rs
 Content-Type: text/plain;charset=UTF-8
-Content-Length: 17
+Content-Length: {}
 
-Tokens received!
-")
-            .unwrap();
+{}",
+                           content.len(),
+                           content);
 
-        let tokens = oauth2client::from_authcode(&self.client, code);
-        self.tokens = Some(tokens);
+        stream.write(resp.as_bytes()).unwrap();
+
 
     }
 
@@ -176,8 +187,7 @@ Server: bearer-rs
 Content-Type: text/plain;charset=UTF-8
 Content-Length: {}
 
-{}
-",
+{}",
                            content.len(),
                            content);
 

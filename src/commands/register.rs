@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use super::super::config::Config;
 use super::super::helpers::path::build_path;
 use super::super::helpers::oauth2;
+use super::super::helpers::providers;
 use super::super::results::{BearerResult, BearerError};
 
 fn read_stdin(message: &str) -> BearerResult<String> {
@@ -36,9 +37,19 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
     println!("If the provider require a https url, please run an https reverse proxy before \
               continue.");
     println!("");
-    let provider_name = read_stdin("Enter the OAuth2.0 Provider Name: ")?;
-    let authorize_url = read_stdin("Enter the OAuth2.0 Authorize Url: ")?;
-    let token_url = read_stdin("Enter the OAuth2.0 Token Url: ")?;
+    let mut provider_name = read_stdin("Enter the OAuth2.0 Provider Name: ")?;
+
+    let (authorize_url, token_url) = match providers::get_provider(&provider_name) {
+        Some(provider) => {
+            provider_name = provider.name.to_string();
+            (provider.authorize_url.to_string(), provider.token_url.to_string())
+        },
+        None => {
+            let authorize_url = read_stdin("Enter the OAuth2.0 Authorize Url: ")?;
+            let token_url = read_stdin("Enter the OAuth2.0 Token Url: ")?;
+            (authorize_url, token_url)
+        },
+    };
     let client_id = read_stdin("Enter the Client Id: ")?;
     let secret = read_stdin("Enter the Client Secret: ")?;
     let scope = read_stdin("Enter the scope (optional): ")?;
