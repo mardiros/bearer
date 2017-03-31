@@ -242,3 +242,125 @@ impl Config {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use std::fs;
+    use std::path::Path;
+    use rand::{thread_rng, Rng};
+
+    #[test]
+    fn test_config_from_file_without_token() {
+        let conf = Config::from_file("src/tests/conf", "dummy");
+        assert_eq!(conf.is_ok(), true);
+        let conf = conf.unwrap();
+        let client = conf.client();
+        assert_eq!(client.provider, "Dummy");
+        assert_eq!(client.client_id, "129eff26");
+        assert_eq!(client.secret, "00163e60d80f");
+        assert_eq!(client.token_url, "http://localhost:1337/token");
+        assert_eq!(client.authorize_url, "http://localhost:1337/authorize");
+
+        assert_eq!(conf.access_token().is_none(), true);
+        assert_eq!(conf.expires_at().is_none(), true);
+        assert_eq!(conf.expired().is_none(), true);
+        assert_eq!(conf.refresh_token().is_none(), true);
+    }
+
+    #[test]
+    fn test_config_from_file_with_token() {
+        let conf = Config::from_file("src/tests/conf", "dummy_with_tokens");
+        assert_eq!(conf.is_ok(), true);
+        let conf = conf.unwrap();
+        let client = conf.client();
+        assert_eq!(client.provider, "Dummy");
+        assert_eq!(client.client_id, "129eff26");
+        assert_eq!(client.secret, "00163e60d80f");
+        assert_eq!(client.token_url, "http://localhost:1337/token");
+        assert_eq!(client.authorize_url, "http://localhost:1337/authorize");
+
+        assert_eq!(conf.access_token(), Some("56afe18"));
+        assert_eq!(conf.expires_at(), Some("2117-03-23T22:24:03+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expired(), Some(false));
+        assert_eq!(conf.refresh_token(), Some("d064258c7"));
+    }
+
+    #[test]
+    fn test_config_from_invalid_file() {
+        let conf = Config::from_file("src/tests/conf", "invalid");
+        assert_eq!(conf.is_err(), true);
+        assert_eq!(conf.unwrap_err(), BearerError::ParseError("".to_string()));
+    }
+
+    #[test]
+    fn test_config_new() {
+        let rnd: String = thread_rng().gen_ascii_chars().take(10).collect();
+
+        let tmpdir = format!("/tmp/test-bearer-{}", rnd);
+
+        let dirpath = Path::new(tmpdir.as_str());
+        assert_eq!(dirpath.exists(), false);
+
+        let conf = Config::new(
+            tmpdir.as_str(),
+            "client_name",
+            "provider",
+            "authorize_url",
+            "token_url",
+            "client_id",
+            "secret",
+            None);
+
+        let conf = conf.unwrap();
+
+        let client = conf.client();
+        assert_eq!(client.provider, "provider");
+        assert_eq!(client.client_id, "client_id");
+        assert_eq!(client.secret, "secret");
+        assert_eq!(client.token_url, "token_url");
+        assert_eq!(client.authorize_url, "authorize_url");
+
+        assert_eq!(conf.access_token().is_none(), true);
+        assert_eq!(conf.expires_at().is_none(), true);
+        assert_eq!(conf.expired().is_none(), true);
+        assert_eq!(conf.refresh_token().is_none(), true);
+
+        let tmpfile = format!("{}/{}.toml", tmpdir, "client_name");
+        let filepath = Path::new(tmpfile.as_str());
+        assert_eq!(filepath.exists(), false);
+
+        conf.write().unwrap();
+        assert_eq!(filepath.exists(), true);
+
+
+        let tmpdir = format!("/tmp/test-bearer-{}", rnd);
+        let mut conf = Config::from_file(tmpdir.as_str(), "client_name").unwrap();
+
+        let tokens = Tokens {
+            access_token: "abc".to_string(),
+            expires_at: "2007-03-23T22:42:00+00:00".parse::<Datetime>().unwrap(),
+            refresh_token: Some("abcdef".to_string()),
+        };
+
+        conf.set_tokens(tokens);
+
+        assert_eq!(conf.access_token(), Some("abc"));
+        assert_eq!(conf.expires_at(), Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expired(), Some(true));
+        assert_eq!(conf.refresh_token(), Some("abcdef"));
+
+        conf.write().unwrap();
+
+        let conf = Config::from_file(tmpdir.as_str(), "client_name").unwrap();
+
+        assert_eq!(conf.access_token(), Some("abc"));
+        assert_eq!(conf.expires_at(), Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expired(), Some(true));
+        assert_eq!(conf.refresh_token(), Some("abcdef"));
+
+        fs::remove_dir_all(tmpdir).unwrap();
+    }
+
+}

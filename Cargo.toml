@@ -27,3 +27,6 @@ serde_json = "^0.9.9"
 
 url = "^1.4.0"
 curl = "^0.4.6"
+
+[dev-dependencies]
+rand = "^0.3.15"

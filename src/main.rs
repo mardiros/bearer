@@ -31,6 +31,9 @@ extern crate url;
 extern crate curl;
 extern crate serde_json;
 
+#[cfg(test)]
+extern crate rand;
+
 use std::io::Write;
 mod helpers;
 mod config;

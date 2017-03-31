@@ -209,10 +209,6 @@ Content-Length: {}
 pub fn get_tokens<'a>(config: &'a Config) -> BearerResult<Tokens> {
 
     let mut server: Http<'a> = Http::new(config);
-    let token = server.fetch_tokens();
-
-    if let Err(err) = token {
-        return Err(BearerError::RecvError(format!("cannot fetch tokens: {:?}", err)));
-    }
-    Ok(token.unwrap())
+    let token = server.fetch_tokens()?;
+    Ok(token)
 }
