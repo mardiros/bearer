@@ -8,8 +8,8 @@ use super::super::config::{Tokens, Config, ClientRef};
 use super::super::results::{BearerResult, BearerError};
 use super::oauth2client;
 
-fn url_encode(to_decode: &str) -> String {
-    to_decode.as_bytes().iter().fold(String::new(), |mut out, &b| {
+fn url_encode(to_encode: &str) -> String {
+    to_encode.as_bytes().iter().fold(String::new(), |mut out, &b| {
         match b as char {
             // unreserved:
             'A'...'Z' | 'a'...'z' | '0'...'9' | '-' | '.' | '_' | '~' => out.push(b as char),
@@ -211,4 +211,88 @@ pub fn get_tokens<'a>(config: &'a Config) -> BearerResult<Tokens> {
     let mut server: Http<'a> = Http::new(config);
     let token = server.fetch_tokens()?;
     Ok(token)
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use std::thread;
+    use std::time;
+    use std::net::TcpStream;
+
+    use super::*;
+
+    #[test]
+    fn test_url_encode() {
+        assert_eq!(url_encode("The éêè !"), "The+%C3%A9%C3%AA%C3%A8+%21")
+    }
+
+    #[test]
+    fn test_http_fetch_tokens_ok() {
+
+        let httphandler = thread::spawn(move || {
+            let conf = Config::from_file("src/tests/conf", "dummy").unwrap();
+            let mut http = Http::new(&conf);
+            let tokens = http.fetch_tokens();
+            assert_eq!(tokens.is_ok(), true);
+            let tokens = tokens.unwrap();
+            assert_eq!(tokens.access_token, "atok");
+            assert_eq!(tokens.refresh_token.unwrap(), "rtok");
+            //assert_eq!(tokens.expires_at, "TIME DEPENDANT VALUE");
+        });
+
+        let dur = time::Duration::from_millis(700);
+        thread::sleep(dur);
+
+        let mut client = TcpStream::connect("127.0.0.1:6750").unwrap();
+        client.write_all(b"GET /callback HTTP/1.1\r\n\r\n").unwrap();
+        let mut response = String::new();
+        client.read_to_string(&mut response).unwrap();
+        assert_eq!(response, r#"HTTP/1.1 302 Moved Temporarily
+Connection: close
+Server: bearer-rs
+Location: http://localhost:1337/authorize?response_type=code&client_id=129eff26&redirect_uri=http%3A%2F%2Flocalhost%3A6750%2Fcallback
+"#);
+
+        let authservhandler = thread::spawn(move || {
+            let authorization_server = TcpListener::bind("127.0.0.1:1337").unwrap();
+            let stream = authorization_server.incoming().next().unwrap();
+            let mut stream = stream.unwrap();
+            let tokens = r#"{
+"access_token": "atok",
+"expires_in": 42,
+"refresh_token": "rtok"}"#;
+            let resp = format!(r#"HTTP/1.0 200 Ok
+Content-Type: application/json;
+Content-Length: {}
+
+{}"#,
+                               tokens.len(),
+                               tokens);
+            stream.write(resp.as_bytes()).unwrap();
+        });
+
+        let dur = time::Duration::from_millis(700);
+        thread::sleep(dur);
+
+        let mut client = TcpStream::connect("127.0.0.1:6750").unwrap();
+        client.write_all(b"GET /callback?code=abc HTTP/1.1\r\n\r\n").unwrap();
+        let mut response = String::new();
+        client.read_to_string(&mut response).unwrap();
+
+        assert_eq!(response, r#"HTTP/1.1 200 Ok
+Connection: close
+Server: bearer-rs
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 14
+
+Token received"#);
+
+        // ensure threads are terminated
+        httphandler.join().unwrap();
+        authservhandler.join().unwrap();
+
+    }
+
 }
