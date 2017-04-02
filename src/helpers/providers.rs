@@ -10,7 +10,7 @@ pub struct Provider {
 type Providers = HashMap<&'static str, Provider>;
 
 
-pub fn known_providers() -> Providers {
+fn known_providers() -> Providers {
     let mut providers: Providers = HashMap::with_capacity(3);
     providers.insert("gandi",
                      Provider {
@@ -40,4 +40,25 @@ pub fn get_provider(name: &str) -> Option<Provider> {
         Some(provider) => Some(provider.clone()),
         None => None,
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_provier_known_provider() {
+        let provider = get_provider("GANDI");
+        assert_eq!(provider.is_some(), true);
+        let provider = provider.unwrap();
+        assert_eq!(provider.name, "Gandi");
+    }
+
+    #[test]
+    fn test_get_provier_unknown_provider() {
+        let provider = get_provider("NXPROVIDER");
+        assert_eq!(provider.is_none(), true);
+    }
+
 }

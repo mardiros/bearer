@@ -70,7 +70,7 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
     println!("Visit to finish the configuration: http://localhost:6750/callback");
 
     debug!("Start server to retrieve tokens");
-    let tokens = oauth2::get_tokens(&config)?;
+    let tokens = oauth2::get_tokens(&config, 6750)?;
     debug!("Token retrieved: {:?}", tokens);
     config.set_tokens(tokens);
     config.write()?;

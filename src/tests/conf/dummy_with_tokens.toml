@@ -1,0 +1,11 @@
+[client]
+provider = "Dummy"
+token_url = "http://localhost:1337/token"
+authorize_url = "http://localhost:1337/authorize"
+client_id = "129eff26"
+secret = "00163e60d80f"
+
+[tokens]
+access_token = "56afe18"
+expires_at = 2117-03-23T22:24:03.000000000+00:00
+refresh_token = "d064258c7"
