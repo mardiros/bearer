@@ -31,9 +31,9 @@ struct Http<'a> {
 }
 
 impl<'a> Http<'a> {
-    pub fn new(config: &'a Config) -> Self {
+    pub fn new(config: &'a Config, port: usize) -> Self {
         Http {
-            port: 6750,
+            port: port,
             client: config.client(),
             tokens: None,
         }
@@ -206,9 +206,9 @@ Content-Length: {}
 }
 
 
-pub fn get_tokens<'a>(config: &'a Config) -> BearerResult<Tokens> {
+pub fn get_tokens<'a>(config: &'a Config, port: usize) -> BearerResult<Tokens> {
 
-    let mut server: Http<'a> = Http::new(config);
+    let mut server: Http<'a> = Http::new(config, port);
     let token = server.fetch_tokens()?;
     Ok(token)
 }
@@ -220,8 +220,10 @@ mod tests {
     use std::thread;
     use std::time;
     use std::net::TcpStream;
+    use rand::{thread_rng, Rng};
 
     use super::*;
+    use super::super::super::results::BearerError;
 
     #[test]
     fn test_url_encode() {
@@ -229,12 +231,25 @@ mod tests {
     }
 
     #[test]
-    fn test_http_fetch_tokens_ok() {
-
+    fn test_get_tokens_ok() {
+        let mut rng = thread_rng();
+        let authorization_server_port: usize = rng.gen_range(3000, 9000);
+        let client_port: usize = rng.gen_range(3000, 9000);
+        let client_addr = format!("127.0.0.1:{}", client_port);
         let httphandler = thread::spawn(move || {
-            let conf = Config::from_file("src/tests/conf", "dummy").unwrap();
-            let mut http = Http::new(&conf);
-            let tokens = http.fetch_tokens();
+            let authorize = format!("http://localhost:{}/authorize", authorization_server_port);
+            let token = format!("http://localhost:{}/token", authorization_server_port);
+            let conf = Config::new(
+                "/tmp",
+                "client_name",
+                "provider",
+                authorize.as_str(),
+                token.as_str(),
+                "12e26",
+                "secret",
+                None).unwrap();
+
+            let tokens = get_tokens(&conf, client_port);
             assert_eq!(tokens.is_ok(), true);
             let tokens = tokens.unwrap();
             assert_eq!(tokens.access_token, "atok");
@@ -245,18 +260,18 @@ mod tests {
         let dur = time::Duration::from_millis(700);
         thread::sleep(dur);
 
-        let mut client = TcpStream::connect("127.0.0.1:6750").unwrap();
+        let mut client = TcpStream::connect(client_addr.as_str()).unwrap();
         client.write_all(b"GET /callback HTTP/1.1\r\n\r\n").unwrap();
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();
-        assert_eq!(response, r#"HTTP/1.1 302 Moved Temporarily
+        assert_eq!(response, format!(r#"HTTP/1.1 302 Moved Temporarily
 Connection: close
 Server: bearer-rs
-Location: http://localhost:1337/authorize?response_type=code&client_id=129eff26&redirect_uri=http%3A%2F%2Flocalhost%3A6750%2Fcallback
-"#);
+Location: http://localhost:{}/authorize?response_type=code&client_id=12e26&redirect_uri=http%3A%2F%2Flocalhost%3A{}%2Fcallback
+"#, authorization_server_port, client_port));
 
         let authservhandler = thread::spawn(move || {
-            let authorization_server = TcpListener::bind("127.0.0.1:1337").unwrap();
+            let authorization_server = TcpListener::bind(format!("127.0.0.1:{}", authorization_server_port)).unwrap();
             let stream = authorization_server.incoming().next().unwrap();
             let mut stream = stream.unwrap();
             let tokens = r#"{
@@ -276,7 +291,7 @@ Content-Length: {}
         let dur = time::Duration::from_millis(700);
         thread::sleep(dur);
 
-        let mut client = TcpStream::connect("127.0.0.1:6750").unwrap();
+        let mut client = TcpStream::connect(client_addr).unwrap();
         client.write_all(b"GET /callback?code=abc HTTP/1.1\r\n\r\n").unwrap();
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();
@@ -293,6 +308,41 @@ Token received"#);
         httphandler.join().unwrap();
         authservhandler.join().unwrap();
 
+    }
+
+    #[test]
+    fn test_get_tokens_error() {
+
+        let mut rng = thread_rng();
+        let client_port: usize = rng.gen_range(3000, 9000);
+        let client_addr = format!("127.0.0.1:{}", client_port);
+
+        let httphandler = thread::spawn(move || {
+            let conf = Config::from_file("src/tests/conf", "dummy").unwrap();
+            let tokens = get_tokens(&conf, client_port);
+            assert_eq!(tokens.is_err(), true);
+            let err = tokens.unwrap_err();
+            assert_eq!(err, BearerError::OAuth2Error("".to_string()));
+        });
+
+        let dur = time::Duration::from_millis(700);
+        thread::sleep(dur);
+
+        let mut client = TcpStream::connect(client_addr.as_str()).unwrap();
+        client.write_all(b"GET /callback?error=server_error&error_description=internal+server+error HTTP/1.1\r\n\r\n").unwrap();
+        let mut response = String::new();
+        client.read_to_string(&mut response).unwrap();
+
+        assert_eq!(response, r#"HTTP/1.1 200 Ok
+Connection: close
+Server: bearer-rs
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 68
+
+No Tokens returns. OAuth2.0 Authorization Server Error: server_error"#);
+
+        // ensure threads are terminated
+        httphandler.join().unwrap();
     }
 
 }
