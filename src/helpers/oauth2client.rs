@@ -93,6 +93,7 @@ pub fn from_refresh_token(client: &ClientRef, refresh_token: &str) -> BearerResu
     Ok(token)
 }
 
+#[cfg(test)]
 mod tests {
     use std::thread;
     use std::time;
