@@ -36,7 +36,6 @@ impl Error for BearerError {
     fn cause(&self) -> Option<&Error> {
         None  // TOFIX
     }
-
 }
 
 

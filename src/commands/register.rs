@@ -43,12 +43,12 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
         Some(provider) => {
             provider_name = provider.name.to_string();
             (provider.authorize_url.to_string(), provider.token_url.to_string())
-        },
+        }
         None => {
             let authorize_url = read_stdin("Enter the OAuth2.0 Authorize Url: ")?;
             let token_url = read_stdin("Enter the OAuth2.0 Token Url: ")?;
             (authorize_url, token_url)
-        },
+        }
     };
     let client_id = read_stdin("Enter the Client Id: ")?;
     let secret = read_stdin("Enter the Client Secret: ")?;
@@ -62,8 +62,8 @@ pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
                                  client_id.as_str(),
                                  secret.as_str(),
                                  match scope.len() {
-                                    0 => None,
-                                    _ => Some(scope.as_str()),
+                                     0 => None,
+                                     _ => Some(scope.as_str()),
                                  })?;
 
     println!("");

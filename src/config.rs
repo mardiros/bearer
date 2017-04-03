@@ -138,7 +138,7 @@ impl Config {
                 scope: match scope {
                     Some(scope) => Some(scope.to_string()),
                     None => None,
-                }
+                },
             },
             tokens: None,
         };
@@ -282,7 +282,8 @@ mod tests {
         assert_eq!(client.authorize_url, "http://localhost:1337/authorize");
 
         assert_eq!(conf.access_token(), Some("56afe18"));
-        assert_eq!(conf.expires_at(), Some("2117-03-23T22:24:03+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expires_at(),
+                   Some("2117-03-23T22:24:03+00:00".parse::<DateTime<UTC>>().unwrap()));
         assert_eq!(conf.expired(), Some(false));
         assert_eq!(conf.refresh_token(), Some("d064258c7"));
     }
@@ -303,15 +304,14 @@ mod tests {
         let dirpath = Path::new(tmpdir.as_str());
         assert_eq!(dirpath.exists(), false);
 
-        let conf = Config::new(
-            tmpdir.as_str(),
-            "client_name",
-            "provider",
-            "authorize_url",
-            "token_url",
-            "client_id",
-            "secret",
-            None);
+        let conf = Config::new(tmpdir.as_str(),
+                               "client_name",
+                               "provider",
+                               "authorize_url",
+                               "token_url",
+                               "client_id",
+                               "secret",
+                               None);
 
         let conf = conf.unwrap();
 
@@ -347,7 +347,8 @@ mod tests {
         conf.set_tokens(tokens);
 
         assert_eq!(conf.access_token(), Some("abc"));
-        assert_eq!(conf.expires_at(), Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expires_at(),
+                   Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
         assert_eq!(conf.expired(), Some(true));
         assert_eq!(conf.refresh_token(), Some("abcdef"));
 
@@ -356,7 +357,8 @@ mod tests {
         let conf = Config::from_file(tmpdir.as_str(), "client_name").unwrap();
 
         assert_eq!(conf.access_token(), Some("abc"));
-        assert_eq!(conf.expires_at(), Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
+        assert_eq!(conf.expires_at(),
+                   Some("2007-03-23T22:42:00+00:00".parse::<DateTime<UTC>>().unwrap()));
         assert_eq!(conf.expired(), Some(true));
         assert_eq!(conf.refresh_token(), Some("abcdef"));
 

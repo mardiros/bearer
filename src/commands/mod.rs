@@ -48,7 +48,7 @@ pub fn start() -> results::BearerResult<()> {
     } else if matches.is_present("REGISTER") {
         register::register(config_dir, client_name.unwrap())?;
     } else {
-       display_header::display_header(config_dir, client_name.unwrap())?;
+        display_header::display_header(config_dir, client_name.unwrap())?;
     }
     Ok(())
 }

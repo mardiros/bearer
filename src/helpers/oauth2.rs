@@ -128,11 +128,10 @@ Method Not Allowed
     fn handle_302(&mut self, stream: &mut TcpStream) {
 
 
-        let mut location = format!(
-            "{}?response_type=code&client_id={}&redirect_uri={}",
-            self.client.authorize_url,
-            url_encode(self.client.client_id),
-            url_encode(self.redirect_uri().as_ref()));
+        let mut location = format!("{}?response_type=code&client_id={}&redirect_uri={}",
+                                   self.client.authorize_url,
+                                   url_encode(self.client.client_id),
+                                   url_encode(self.redirect_uri().as_ref()));
 
         if let Some(scope) = self.client.scope {
             location.push_str("&scope=");
@@ -145,7 +144,8 @@ Method Not Allowed
 Connection: close
 Server: bearer-rs
 Location: {}
-", location);
+",
+                           location);
         stream.write(resp.as_bytes()).unwrap();
     }
 
@@ -158,9 +158,7 @@ Location: {}
                 self.tokens = Some(Ok(res));
                 "Token received".to_string()
             }
-            Err(err) => {
-                format!("Error while fetching token: {:?}", err)
-            }
+            Err(err) => format!("Error while fetching token: {:?}", err),
         };
 
         let resp = format!("HTTP/1.1 200 Ok
@@ -239,22 +237,22 @@ mod tests {
         let httphandler = thread::spawn(move || {
             let authorize = format!("http://localhost:{}/authorize", authorization_server_port);
             let token = format!("http://localhost:{}/token", authorization_server_port);
-            let conf = Config::new(
-                "/tmp",
-                "client_name",
-                "provider",
-                authorize.as_str(),
-                token.as_str(),
-                "12e26",
-                "secret",
-                None).unwrap();
+            let conf = Config::new("/tmp",
+                                   "client_name",
+                                   "provider",
+                                   authorize.as_str(),
+                                   token.as_str(),
+                                   "12e26",
+                                   "secret",
+                                   None)
+                .unwrap();
 
             let tokens = get_tokens(&conf, client_port);
             assert_eq!(tokens.is_ok(), true);
             let tokens = tokens.unwrap();
             assert_eq!(tokens.access_token, "atok");
             assert_eq!(tokens.refresh_token.unwrap(), "rtok");
-            //assert_eq!(tokens.expires_at, "TIME DEPENDANT VALUE");
+            // assert_eq!(tokens.expires_at, "TIME DEPENDANT VALUE");
         });
 
         let dur = time::Duration::from_millis(700);
@@ -271,7 +269,8 @@ Location: http://localhost:{}/authorize?response_type=code&client_id=12e26&redir
 "#, authorization_server_port, client_port));
 
         let authservhandler = thread::spawn(move || {
-            let authorization_server = TcpListener::bind(format!("127.0.0.1:{}", authorization_server_port)).unwrap();
+            let authorization_server =
+                TcpListener::bind(format!("127.0.0.1:{}", authorization_server_port)).unwrap();
             let stream = authorization_server.incoming().next().unwrap();
             let mut stream = stream.unwrap();
             let tokens = r#"{
@@ -296,7 +295,8 @@ Content-Length: {}
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();
 
-        assert_eq!(response, r#"HTTP/1.1 200 Ok
+        assert_eq!(response,
+                   r#"HTTP/1.1 200 Ok
 Connection: close
 Server: bearer-rs
 Content-Type: text/plain;charset=UTF-8
@@ -333,7 +333,8 @@ Token received"#);
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();
 
-        assert_eq!(response, r#"HTTP/1.1 200 Ok
+        assert_eq!(response,
+                   r#"HTTP/1.1 200 Ok
 Connection: close
 Server: bearer-rs
 Content-Type: text/plain;charset=UTF-8

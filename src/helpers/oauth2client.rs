@@ -43,9 +43,10 @@ fn fetch_token(token_url: &str, form: &mut &[u8]) -> BearerResult<Tokens> {
     let data = String::from_utf8(data).unwrap();
 
     if code >= 300 {
-        return Err(BearerError::OAuth2Error(
-            format!("Server did not return a valid response while consuming \
-auth code, expected `2XX`, found `{}`: {}", code, data)));
+        return Err(BearerError::OAuth2Error(format!(r#"Server did not return a valid response \
+while consuming auth code, expected `2XX`, found `{}`: {}"#,
+                                                    code,
+                                                    data)));
     }
 
 
@@ -61,7 +62,10 @@ auth code, expected `2XX`, found `{}`: {}", code, data)));
 }
 
 
-pub fn from_authcode(client: &ClientRef, authcode: &str, callback_uri: &str) -> BearerResult<Tokens> {
+pub fn from_authcode(client: &ClientRef,
+                     authcode: &str,
+                     callback_uri: &str)
+                     -> BearerResult<Tokens> {
 
     let form = URLSerializer::new(String::new())
         .append_pair("client_id", client.client_id)

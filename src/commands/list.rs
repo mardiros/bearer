@@ -1,4 +1,4 @@
-use super::super::results::{BearerResult};
+use super::super::results::BearerResult;
 use super::super::helpers::path;
 
 
