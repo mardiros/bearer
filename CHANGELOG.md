@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## bearer 0.2.1 2017-04-05
+
+ * Add a `bearer --list` command.
+ * Add a `bearer [client] --refresh` command.
+
 ## bearer 0.2.0 2017-04-02
 
  * Simplify registrations on known providers.
