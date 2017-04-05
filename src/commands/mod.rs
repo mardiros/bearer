@@ -46,9 +46,9 @@ pub fn start() -> results::BearerResult<()> {
     if matches.is_present("LIST") {
         list::command(config_dir)?;
     } else if matches.is_present("REGISTER") {
-        register::register(config_dir, client_name.unwrap())?;
+        register::command(config_dir, client_name.unwrap())?;
     } else {
-        display_header::display_header(config_dir, client_name.unwrap())?;
+        display_header::command(config_dir, client_name.unwrap())?;
     }
     Ok(())
 }

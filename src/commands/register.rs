@@ -19,7 +19,7 @@ fn read_stdin(message: &str) -> BearerResult<String> {
 }
 
 
-pub fn register(config_dir: &str, client_name: &str) -> BearerResult<()> {
+pub fn command(config_dir: &str, client_name: &str) -> BearerResult<()> {
 
     debug!("Registering new client {} in directory {}",
            client_name,

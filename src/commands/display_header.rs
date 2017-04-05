@@ -5,7 +5,7 @@ use super::super::config::Config;
 use super::super::helpers::oauth2client;
 use super::super::results::{BearerResult, BearerError};
 
-pub fn display_header(config_dir: &str, client_name: &str) -> BearerResult<()> {
+pub fn command(config_dir: &str, client_name: &str) -> BearerResult<()> {
     debug!("Display authorization header for client {} in directory {}",
            client_name,
            config_dir);
