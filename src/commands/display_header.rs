@@ -21,9 +21,8 @@ pub fn command(config_dir: &str, client_name: &str) -> BearerResult<()> {
                     Some(tokens)
                 }
                 None => {
-                    return Err(BearerError::ValueError("Client must be initialized. (No Refresh \
-                                                        Tokens)"
-                        .to_string()))
+                    return Err(BearerError::ValueError("Client must be refreshed. (No Refresh \
+ Token)".to_string()))
                 }
             }
         }
