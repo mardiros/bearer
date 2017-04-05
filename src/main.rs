@@ -12,6 +12,10 @@
 //! curl -H "$(bearer client_name)" "http://<oauth2 api>" | jq
 //! ```
 //!
+//! Clients that have refresh tokens automatically retrieve a new access token 
+//! when it has expire. If not the command `--refresh` has to be used to get
+//! a new access token.
+//!
 
 #[macro_use]
 extern crate log;
