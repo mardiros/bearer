@@ -5,6 +5,7 @@ use super::results;
 mod register;
 mod display_header;
 mod list;
+mod refresh;
 
 
 pub fn start() -> results::BearerResult<()> {
@@ -28,6 +29,11 @@ pub fn start() -> results::BearerResult<()> {
             .long("register")
             .conflicts_with("LIST")
             .help("Register a new client. This command is interactive."))
+        .arg(Arg::with_name("REFRESH")
+            .short("u")
+            .long("refresh")
+            .conflicts_with("LIST")
+            .help("Refresh an existing client. This command is interactive."))
         .arg(Arg::with_name("CLIENT_NAME")
             .help("Set the client name.")
             .required_unless_one(&["LIST"])
@@ -47,6 +53,8 @@ pub fn start() -> results::BearerResult<()> {
         list::command(config_dir)?;
     } else if matches.is_present("REGISTER") {
         register::command(config_dir, client_name.unwrap())?;
+    } else if matches.is_present("REFRESH") {
+        refresh::command(config_dir, client_name.unwrap())?;
     } else {
         display_header::command(config_dir, client_name.unwrap())?;
     }

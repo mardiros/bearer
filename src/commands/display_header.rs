@@ -31,8 +31,7 @@ pub fn command(config_dir: &str, client_name: &str) -> BearerResult<()> {
             None
         }
         None => {
-            error!("TODO: Command to reregister client implement yet");
-            return Err(BearerError::ValueError("Client must be initialized".to_string()));
+            return Err(BearerError::ValueError("Client must be refreshed".to_string()));
         }
     };
 
