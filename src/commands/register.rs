@@ -54,26 +54,26 @@ pub fn command(config_dir: &str, client_name: &str) -> BearerResult<()> {
     let secret = read_stdin("Enter the Client Secret: ")?;
     let scope = read_stdin("Enter the scope (optional): ")?;
 
-    let mut config = Config::new(config_dir,
-                                 client_name,
-                                 provider_name.as_str(),
-                                 authorize_url.as_str(),
-                                 token_url.as_str(),
-                                 client_id.as_str(),
-                                 secret.as_str(),
-                                 match scope.len() {
-                                     0 => None,
-                                     _ => Some(scope.as_str()),
-                                 })?;
+    let mut conf = Config::new(config_dir,
+                               client_name,
+                               provider_name.as_str(),
+                               authorize_url.as_str(),
+                               token_url.as_str(),
+                               client_id.as_str(),
+                               secret.as_str(),
+                               match scope.len() {
+                                   0 => None,
+                                   _ => Some(scope.as_str()),
+                               })?;
 
     println!("");
     println!("Visit to finish the configuration: http://localhost:6750/callback");
 
     debug!("Start server to retrieve tokens");
-    let tokens = oauth2::get_tokens(&config, 6750)?;
+    let tokens = oauth2::get_tokens(&conf, 6750)?;
     debug!("Token retrieved: {:?}", tokens);
-    config.set_tokens(tokens);
-    config.write()?;
+    conf.set_tokens(tokens);
+    conf.write()?;
     println!("Tokens retrieved succesfully");
     Ok(())
 }
