@@ -1,20 +1,7 @@
 //! # Bearer
 //!
 //! bearer is a command line utility to generate Authorization HTTP header
-//! for bearer tokens. See https://tools.ietf.org/html/rfc6750
-//!
-//! bearer comes with a `--register` that will ask you the OAuth 2.0
-//! client information to initialize the access and refresh tokens.
-//!
-//! Afterwhat it generate a header you can path to a curl request:
-//!
-//! ```
-//! curl -H "$(bearer client_name)" "http://<oauth2 api>" | jq
-//! ```
-//!
-//! Clients that have refresh tokens automatically retrieve a new access token 
-//! when it has expire. If not the command `--refresh` has to be used to get
-//! a new access token.
+//! for bearer tokens. See README.md for more informations.
 //!
 
 #[macro_use]
