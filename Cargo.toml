@@ -5,7 +5,9 @@ authors = ["Guillaume Gauvrit <guillaume@gauvr.it>"]
 readme = "README.md"
 keywords = ["OAuth2"]
 categories = ["authentication", "command-line-interface"]
-description = "Command line utility to generate HTTP Authorization header for bearer tokens as describes in RFC 6750."
+description = """Command line utility to generate HTTP Authorization header
+ with bearer tokens. This is achieved with OAuth2 authorization code and
+ refresh token workflow."""
 license = "BSD-3-Clause"
 documentation = "https://docs.rs/crate/bearer"
 #homepage = "https://github.com/mardiros/bearer"
