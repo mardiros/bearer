@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## bearer 0.2.2 2017-04-08
+
+ * Update documentation 
+
 ## bearer 0.2.1 2017-04-05
 
  * Add a `bearer --list` command.
