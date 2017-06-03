@@ -1,6 +1,6 @@
 [client]
 provider = "Dummy"
-token_url = "http://localhost:1337/token"
-authorize_url = "http://localhost:1337/authorize"
+token_url = "http://127.0.0.1:1337/token"
+authorize_url = "http://127.0.0.1:1337/authorize"
 client_id = "129eff26"
 secret = "00163e60d80f"

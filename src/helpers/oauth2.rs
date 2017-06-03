@@ -195,7 +195,7 @@ Content-Length: {}
     }
 
     fn addr(&self) -> String {
-        return format!("127.0.0.1:{}", self.port);
+        return format!("localhost:{}", self.port);
     }
 
     fn redirect_uri(&self) -> String {
@@ -233,10 +233,9 @@ mod tests {
         let mut rng = thread_rng();
         let authorization_server_port: usize = rng.gen_range(3000, 9000);
         let client_port: usize = rng.gen_range(3000, 9000);
-        let client_addr = format!("127.0.0.1:{}", client_port);
         let httphandler = thread::spawn(move || {
-            let authorize = format!("http://localhost:{}/authorize", authorization_server_port);
-            let token = format!("http://localhost:{}/token", authorization_server_port);
+            let authorize = format!("http://127.0.0.1:{}/authorize", authorization_server_port);
+            let token = format!("http://127.0.0.1:{}/token", authorization_server_port);
             let conf = Config::new("/tmp",
                                    "client_name",
                                    "provider",
@@ -257,15 +256,23 @@ mod tests {
 
         let dur = time::Duration::from_millis(700);
         thread::sleep(dur);
-
-        let mut client = TcpStream::connect(client_addr.as_str()).unwrap();
+        let mut client_addr = format!("127.0.0.1:{}", client_port);
+        let client = TcpStream::connect(client_addr.as_str());
+        let mut client = if client.is_err() {
+            client_addr = format!("[::1]:{}", client_port);
+            let client = TcpStream::connect(client_addr.as_str());
+            client.unwrap()
+        }
+        else {
+            client.unwrap()
+        };
         client.write_all(b"GET /callback HTTP/1.1\r\n\r\n").unwrap();
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();
         assert_eq!(response, format!(r#"HTTP/1.1 302 Moved Temporarily
 Connection: close
 Server: bearer-rs
-Location: http://localhost:{}/authorize?response_type=code&client_id=12e26&redirect_uri=http%3A%2F%2Flocalhost%3A{}%2Fcallback
+Location: http://127.0.0.1:{}/authorize?response_type=code&client_id=12e26&redirect_uri=http%3A%2F%2Flocalhost%3A{}%2Fcallback
 "#, authorization_server_port, client_port));
 
         let authservhandler = thread::spawn(move || {
@@ -273,17 +280,17 @@ Location: http://localhost:{}/authorize?response_type=code&client_id=12e26&redir
                 TcpListener::bind(format!("127.0.0.1:{}", authorization_server_port)).unwrap();
             let stream = authorization_server.incoming().next().unwrap();
             let mut stream = stream.unwrap();
-            let tokens = r#"{
-"access_token": "atok",
+            let tokens = r#"{"access_token": "atok",
 "expires_in": 42,
 "refresh_token": "rtok"}"#;
-            let resp = format!(r#"HTTP/1.0 200 Ok
-Content-Type: application/json;
-Content-Length: {}
+            let content_len = format!("Content-Length: {}", tokens.len());
+            let resp = vec!["HTTP/1.0 200 Ok",
+                            "Content-Type: application/json",
+                            content_len.as_str(),
+                            "",
+                            tokens];
+            let resp = resp.join("\r\n");
 
-{}"#,
-                               tokens.len(),
-                               tokens);
             stream.write(resp.as_bytes()).unwrap();
         });
 
@@ -315,7 +322,6 @@ Token received"#);
 
         let mut rng = thread_rng();
         let client_port: usize = rng.gen_range(3000, 9000);
-        let client_addr = format!("127.0.0.1:{}", client_port);
 
         let httphandler = thread::spawn(move || {
             let conf = Config::from_file("src/tests/conf", "dummy").unwrap();
@@ -328,7 +334,16 @@ Token received"#);
         let dur = time::Duration::from_millis(700);
         thread::sleep(dur);
 
-        let mut client = TcpStream::connect(client_addr.as_str()).unwrap();
+        let client_addr = format!("127.0.0.1:{}", client_port);
+        let client = TcpStream::connect(client_addr.as_str());
+        let mut client = if client.is_err() {
+            let client_addr = format!("[::1]:{}", client_port);
+            let client = TcpStream::connect(client_addr.as_str());
+            client.unwrap()
+        }
+        else {
+            client.unwrap()
+        };
         client.write_all(b"GET /callback?error=server_error&error_description=internal+server+error HTTP/1.1\r\n\r\n").unwrap();
         let mut response = String::new();
         client.read_to_string(&mut response).unwrap();

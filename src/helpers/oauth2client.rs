@@ -1,7 +1,6 @@
-use std::io::prelude::*;
 
 use serde_json;
-use curl::easy::Easy;
+use cabot::{RequestBuilder, Client};
 use url::form_urlencoded::Serializer as URLSerializer;
 
 use super::super::results::{BearerResult, BearerError};
@@ -16,31 +15,21 @@ pub struct JsonToken {
 }
 
 
-fn fetch_token(token_url: &str, form: &mut &[u8]) -> BearerResult<Tokens> {
+fn fetch_token(token_url: &str, form: &[u8]) -> BearerResult<Tokens> {
+    println!("Fetchin tokens from {}", token_url);
+    let request = RequestBuilder::new(token_url)
+        .set_http_method("POST")
+        .add_header("Content-Type: application/x-www-form-urlencoded")
+        .set_body(form)
+        .build();
 
-    let mut curl = Easy::new();
-    curl.url(token_url).unwrap();
-    curl.post(true).unwrap();
-    curl.post_field_size(form.len() as u64).unwrap();
+    let request = request.unwrap();
 
-    let mut data = Vec::new();
-    {
-        let mut transfer = curl.transfer();
+    let client = Client::new();
+    let response = client.execute(&request).unwrap();
 
-        transfer.read_function(|buf| Ok(form.read(buf).unwrap_or(0)))
-            .unwrap();
-
-        transfer.write_function(|new_data| {
-                data.extend_from_slice(new_data);
-                Ok(new_data.len())
-            })
-            .unwrap();
-
-        transfer.perform().unwrap();
-    }
-
-    let code = curl.response_code().unwrap();
-    let data = String::from_utf8(data).unwrap();
+    let code = response.status_code();
+    let data = response.body_as_string().unwrap();
 
     if code >= 300 {
         return Err(BearerError::OAuth2Error(format!(r#"Server did not return a valid response \
@@ -75,8 +64,7 @@ pub fn from_authcode(client: &ClientRef,
         .append_pair("grant_type", "authorization_code")
         .finish();
 
-    let mut form: &[u8] = form.as_bytes();
-    fetch_token(client.token_url, &mut form)
+    fetch_token(client.token_url, form.as_bytes())
 }
 
 
@@ -89,8 +77,7 @@ pub fn from_refresh_token(client: &ClientRef, refresh_token: &str) -> BearerResu
         .append_pair("grant_type", "refresh_token")
         .finish();
 
-    let mut form: &[u8] = form.as_bytes();
-    let mut token = fetch_token(client.token_url, &mut form)?;
+    let mut token = fetch_token(client.token_url, form.as_bytes())?;
     if token.refresh_token.is_none() {
         token.refresh_token = Some(refresh_token.to_string());
     }
@@ -99,6 +86,8 @@ pub fn from_refresh_token(client: &ClientRef, refresh_token: &str) -> BearerResu
 
 #[cfg(test)]
 mod tests {
+    use std::io::prelude::*;
+
     use std::thread;
     use std::time;
     use std::net::TcpListener;
@@ -113,7 +102,7 @@ mod tests {
         let mut rng = thread_rng();
         let server_port: usize = rng.gen_range(3000, 9000);
         let server_addr = format!("127.0.0.1:{}", server_port);
-        let token_url = format!("http://localhost:{}", server_port);
+        let token_url = format!("http://127.0.0.1:{}", server_port);
 
         let authservhandler = thread::spawn(move || {
             let authorization_server = TcpListener::bind(server_addr.as_str()).unwrap();
@@ -123,13 +112,15 @@ mod tests {
 "access_token": "atok",
 "expires_in": 42,
 "refresh_token": "rtok"}"#;
-            let resp = format!(r#"HTTP/1.0 200 Ok
-Content-Type: application/json;
-Content-Length: {}
+            let content_len = format!("Content-Length: {}", tokens.len());
 
-{}"#,
-                               tokens.len(),
-                               tokens);
+            let resp = vec!["HTTP/1.0 200 Ok",
+                            "Content-Type: application/json",
+                            content_len.as_str(),
+                            "",
+                            tokens];
+            let resp = resp.join("\r\n");
+
             stream.write(resp.as_bytes()).unwrap();
         });
 
@@ -145,7 +136,7 @@ Content-Length: {}
             scope: None,
         };
 
-        let tokens = from_authcode(&client, "authcode", "http://::1/callback");
+        let tokens = from_authcode(&client, "authcode", "http://127.0.0.1/callback");
         assert_eq!(tokens.is_err(), false);
         let tokens = tokens.unwrap();
         assert_eq!(tokens.access_token, "atok");
@@ -154,13 +145,14 @@ Content-Length: {}
         authservhandler.join().unwrap();
 
     }
+
     #[test]
     fn test_from_refresh_token() {
 
         let mut rng = thread_rng();
         let server_port: usize = rng.gen_range(3000, 9000);
         let server_addr = format!("127.0.0.1:{}", server_port);
-        let token_url = format!("http://localhost:{}", server_port);
+        let token_url = format!("http://127.0.0.1:{}", server_port);
 
         let authservhandler = thread::spawn(move || {
             let authorization_server = TcpListener::bind(server_addr.as_str()).unwrap();
@@ -169,13 +161,14 @@ Content-Length: {}
             let tokens = r#"{
 "access_token": "atok",
 "expires_in": 42}"#;
-            let resp = format!(r#"HTTP/1.0 200 Ok
-Content-Type: application/json;
-Content-Length: {}
+            let content_len = format!("Content-Length: {}", tokens.len());
+            let resp = vec!["HTTP/1.0 200 Ok",
+                            "Content-Type: application/json",
+                            content_len.as_str(),
+                            "",
+                            tokens];
+            let resp = resp.join("\r\n");
 
-{}"#,
-                               tokens.len(),
-                               tokens);
             stream.write(resp.as_bytes()).unwrap();
         });
 

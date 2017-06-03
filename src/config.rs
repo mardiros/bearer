@@ -260,8 +260,8 @@ mod tests {
         assert_eq!(client.provider, "Dummy");
         assert_eq!(client.client_id, "129eff26");
         assert_eq!(client.secret, "00163e60d80f");
-        assert_eq!(client.token_url, "http://localhost:1337/token");
-        assert_eq!(client.authorize_url, "http://localhost:1337/authorize");
+        assert_eq!(client.token_url, "http://127.0.0.1:1337/token");
+        assert_eq!(client.authorize_url, "http://127.0.0.1:1337/authorize");
 
         assert_eq!(conf.access_token().is_none(), true);
         assert_eq!(conf.expires_at().is_none(), true);
@@ -278,8 +278,8 @@ mod tests {
         assert_eq!(client.provider, "Dummy");
         assert_eq!(client.client_id, "129eff26");
         assert_eq!(client.secret, "00163e60d80f");
-        assert_eq!(client.token_url, "http://localhost:1337/token");
-        assert_eq!(client.authorize_url, "http://localhost:1337/authorize");
+        assert_eq!(client.token_url, "http://127.0.0.1:1337/token");
+        assert_eq!(client.authorize_url, "http://127.0.0.1:1337/authorize");
 
         assert_eq!(conf.access_token(), Some("56afe18"));
         assert_eq!(conf.expires_at(),

@@ -19,7 +19,7 @@ extern crate serde;
 extern crate serde_derive;
 
 extern crate url;
-extern crate curl;
+extern crate cabot;
 extern crate serde_json;
 
 #[cfg(test)]
