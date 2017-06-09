@@ -1,6 +1,6 @@
 [package]
 name = "bearer"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Guillaume Gauvrit <guillaume@gauvr.it>"]
 readme = "README.md"
 keywords = ["OAuth2"]

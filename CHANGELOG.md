@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## bearer 0.2.3 2017-09-09
+
+ * Replace (curl)[https://crates.io/crates/curl] by (cabot)[https://crates.io/crates/cabot]
+
 ## bearer 0.2.2 2017-04-08
 
  * Update documentation 

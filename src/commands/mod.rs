@@ -12,7 +12,7 @@ pub fn start() -> results::BearerResult<()> {
 
 
     let matches = App::new("bearer")
-        .version("0.2.2")
+        .version("0.2.3")
         .author("Guillaume Gauvrit <guillaume@gauvr.it>")
         .about("Create Bearer Token from the command line")
         .arg(Arg::with_name("CONFIG")
